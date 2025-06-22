@@ -87,7 +87,7 @@ Feel free to fork the repository, make improvements, and submit pull requests. S
 
 ## 📁 Repository Structure
 ```plaintext
-📁 CAD_Files/
+📁 Design_Files/
  ┣ Base.SLDPRT
  ┣ Battery Case.SLDPRT
  ┣ Coupling.SLDPRT
@@ -98,7 +98,10 @@ Feel free to fork the repository, make improvements, and submit pull requests. S
  ┣ ZGA37RG Motor v2.step
  ┗ teamproject.SLDASM
 
-📁 Code/
- ┗ sumo_robot.ino
+📁 Simulation/
+ ┣ Simulation_Sumo_robot_code.pdsprj
+ ┗ Simulation_sumo_robot.ino
+
+ 📁 Sumo_Robot_Car_Code.ino
 
 📄 README.md

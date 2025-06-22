@@ -102,6 +102,6 @@ Feel free to fork the repository, make improvements, and submit pull requests. S
  ┣ Simulation_Sumo_robot_code.pdsprj
  ┗ Simulation_sumo_robot.ino
 
- 📁 Sumo_Robot_Car_Code.ino
+📁 Sumo_Robot_Car_Code.ino
 
 📄 README.md

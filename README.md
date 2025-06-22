@@ -3,7 +3,7 @@
 ## Overview
 This project presents a fully functional **Sumo Robot**, built to compete in robot sumo competitions where autonomous or remote-controlled robots attempt to push each other out of a circular ring. Our design combines **mechanical precision**, **advanced electronics**, and **wireless control** for agile and intelligent performance.
 
-The robot features a custom 3D-printed chassis, obstacle detection using IR sensors, and wireless Bluetooth control via a PlayStation controller — all powered by an **ESP32 microcontroller**.
+The robot features a custom 3D-printed chassis, obstacle detection using IR sensors, and wireless Bluetooth control via a PlayStation controller — all powered by an **ESP32 microcontroller and a lithium battery**.
 
 ---
 

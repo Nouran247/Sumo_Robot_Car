@@ -85,7 +85,7 @@ Feel free to fork the repository, make improvements, and submit pull requests. S
 
 ---
 
-### 📸 Final Assembly of Our Sumo Robot Car
+### 📸 Final Sumo Robot Car Ready for Competition
 
 ![Sumo Robot](Sumo_Car_Robot.jpg)
 

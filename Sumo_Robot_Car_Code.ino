@@ -1,380 +1,161 @@
-// #include <ESP_I2S.h>
-// #include <wav_header.h>
+// Sumo Robot Car Code
 
 #include <Ps3Controller.h>
-
 #include <dummy.h>
-
 #include <EEPROM.h>
 
-//front right motor pins
+// ===================== Motor Pins ===================== //
 
-const int m_frontRight_forward = 16;
-const int m_frontRight_backwards = 17;
-const int m_frontRight_pwm = 15;
+// Front Right Motor
+const int FR_FORWARD   = 16;
+const int FR_BACKWARD  = 17;
+const int FR_PWM       = 15;
 
-//front left motor pins
+// Front Left Motor
+const int FL_FORWARD   = 25;
+const int FL_BACKWARD  = 33;
+const int FL_PWM       = 32;
 
-const int m_frontLeft_forward = 25;
-const int m_frontLeft_backwards = 33;
-const int m_frontLeft_pwm = 32;
+// Back Left Motor
+const int BL_FORWARD   = 26;
+const int BL_BACKWARD  = 27;
+const int BL_PWM       = 13;
 
-//back left motor pins
+// Back Right Motor
+const int BR_FORWARD   = 19;
+const int BR_BACKWARD  = 18;
+const int BR_PWM       = 22;
 
-const int m_backLeft_forward = 26;
-const int m_backLeft_backwards = 27;
-const int m_backLeft_pwm = 13;
+// PWM Channels
+const int CH_FR = 0;
+const int CH_FL = 1;
+const int CH_BL = 2;
+const int CH_BR = 3;
 
-//back right motor pins
+// PWM Config
+const int PWM_FREQ = 500;
+const int PWM_RES  = 8;
 
-const int m_backRight_forward = 19;
-const int m_backRight_backwards = 18;
-const int m_backRight_pwm = 22;
+// ===================== Sensor Pins ===================== //
+const int SENSOR_FRONT = 2;
+const int SENSOR_RIGHT = 21;
 
-//ramp motor pins
+// ===================== Color Enum ===================== //
+enum Color { WHITE = 0, BLACK = 1 };
 
-// const int m_ramp_forward = ;
-// const int m_ramp_backwards = ;
-
-//PWM Channels
-const int channel_frontRight = 0;
-const int channel_frontLeft = 1;
-const int channel_backLeft = 2;
-const int channel_backRight = 3;
-
-// frequency for the PWM channels
-//higher frequencies equal smoother running but can also mean generating more heat and more power consumption
-//lower frequencies is the opposite while ensuring higher torque which is useful to us and lowers the noise as well
-const int pwmFrequency = 500;
-
-// 8-bit resolution which divides the maximum value into 256(2^8) parts
-const int pwmResolution = 8;
-
-//sensor pins
-
-const int sensor_front = 2;
-const int sensor_right = 21;
-
-//speed for use later in motors
-// const int speed = 150;
-
-
-enum color {
-  white = 0,
-  black = 1
-};
+// ===================== Setup ===================== //
 
 void onConnect() {
-  Serial.println("Ps3 controller ON");
+  Serial.println("PS3 controller connected.");
 }
+
 void setup() {
   Serial.begin(115200);
-  //Motors setup
-  pinMode(m_frontRight_forward, OUTPUT);
-  pinMode(m_frontRight_backwards, OUTPUT);
 
-  pinMode(m_frontLeft_forward, OUTPUT);
-  pinMode(m_frontLeft_backwards, OUTPUT);
+  // Motor Direction Pins
+  pinMode(FR_FORWARD, OUTPUT); pinMode(FR_BACKWARD, OUTPUT);
+  pinMode(FL_FORWARD, OUTPUT); pinMode(FL_BACKWARD, OUTPUT);
+  pinMode(BL_FORWARD, OUTPUT); pinMode(BL_BACKWARD, OUTPUT);
+  pinMode(BR_FORWARD, OUTPUT); pinMode(BR_BACKWARD, OUTPUT);
 
-  pinMode(m_backLeft_forward, OUTPUT);
-  pinMode(m_backLeft_backwards, OUTPUT);
+  // PWM Setup
+  ledcSetup(CH_FR, PWM_FREQ, PWM_RES);
+  ledcSetup(CH_FL, PWM_FREQ, PWM_RES);
+  ledcSetup(CH_BL, PWM_FREQ, PWM_RES);
+  ledcSetup(CH_BR, PWM_FREQ, PWM_RES);
 
-  pinMode(m_backRight_forward, OUTPUT);
-  pinMode(m_backRight_backwards, OUTPUT);
+  ledcAttachPin(FR_PWM, CH_FR);
+  ledcAttachPin(FL_PWM, CH_FL);
+  ledcAttachPin(BL_PWM, CH_BL);
+  ledcAttachPin(BR_PWM, CH_BR);
 
-  //PWM Channels setupp
-  // ledcAttach(m_frontRight_pwm, pwmFrequency, pwmResolution);
-  // ledcAttach(m_frontLeft_pwm, pwmFrequency, pwmResolution);
-  // ledcAttach(m_backLeft_pwm, pwmFrequency, pwmResolution);
-  // ledcAttach(m_backRight_pwm, pwmFrequency, pwmResolution);
+  // Sensor Setup
+  pinMode(SENSOR_FRONT, INPUT);
+  pinMode(SENSOR_RIGHT, INPUT);
 
-  //Old way of reading adc pins
-  ledcSetup(channel_frontRight, pwmFrequency, pwmResolution);
-  ledcSetup(channel_frontLeft, pwmFrequency, pwmResolution);
-  ledcSetup(channel_backLeft, pwmFrequency, pwmResolution);
-  ledcSetup(channel_backRight, pwmFrequency, pwmResolution);
-
-  ledcAttachPin(m_frontRight_pwm, channel_frontRight);
-  ledcAttachPin(m_frontLeft_pwm, channel_frontLeft);
-  ledcAttachPin(m_backLeft_pwm, channel_backLeft);
-  ledcAttachPin(m_backRight_pwm, channel_backRight);
-
-
-
-  //Sensors setup
-  pinMode(sensor_front, INPUT);
-  pinMode(sensor_right, INPUT);
-  // pinMode(sensor_left, INPUT);
-
+  // PS3 Controller
   Ps3.attach(onConnect);
   Ps3.begin("ec:62:60:a2:60:f8");
-
-  Serial.begin(115200);
 }
+
+// ===================== Main Loop ===================== //
 
 void loop() {
-  int front_sensor_color = digitalRead(sensor_front);
-  int right_sensor_color = digitalRead(sensor_right);
-  // int left_sensor_color = digitalRead(sensor_left);
-  // Serial.println(front_sensor_color);
+  int frontColor = digitalRead(SENSOR_FRONT);
+  int rightColor = digitalRead(SENSOR_RIGHT);
 
-  
+  if (Ps3.isConnected()) {
+    int leftY  = Ps3.data.analog.stick.ly;
+    int rightX = Ps3.data.analog.stick.rx;
+    int R1     = Ps3.data.button.r1;
+    int R2     = Ps3.data.button.r2;
 
+    stopMotors();
 
-
-  // if (front_sensor_color == black) {
-  //   move_backwards(200);
-  //   delay(250);
-  //   turn_right(-150);
-  //   delay(250);
-  // }
-
-  // // if (left_sensor_color == black) {
-  // //   turn_right(-150);
-  // //   delay(250);
-  // // }
-
-  // if (right_sensor_color == black) {
-  //   turn_left(-150);
-  //   delay(250);
-  // }
-
-
-  // if (front_sensor_color == white && left_sensor_color == white && right_sensor_color == white ) {
-  //   move_forward(speed);
-  // }
-
-  // delay(50);
-
-
-
-  // stop_motors();
-  // delay(100);
-  // move_forward(150);
-  // delay(5000);
-  // stop_motors();
-  // delay(5000);
-  // turn_left(150);
-  // delay(5000);
-  // stop_motors();
-  // delay(5000);
-  // move_backwards(150);
-  // delay(5000);
-  // stop_motors();
-  // delay(5000);
-  // turn_right(150);
-  // delay(5000);
-
-  if(Ps3.isConnected()){
-  int leftY = Ps3.data.analog.stick.ly;
-  int rightX = Ps3.data.analog.stick.rx;
-  int R1 = Ps3.data.button.r1;
-  int R2 = Ps3.data.button.r2;
-  // int ramp_motor = Ps3.data.button.square;
-  
-
-
-  stop_motors();
-
-
-  //Left joystick is for moving
-
-  if (leftY < -10) {
-      if (R1) {
-        move_forward(250);
-      }
-
-      else {
-        move_forward((leftY * -1.5) + 5);
-      }
-
-
-
+    // Forward/Backward
+    if (leftY < -10) {
+      R1 ? moveForward(250) : moveForward((leftY * -1.5) + 5);
     }
-
     else if (leftY > 10) {
-      if (R2) {
-        move_backwards(230);
-      }
-      else {
-         move_backwards((leftY * 1.2) - 5);
-      
-      }
-     
-
+      R2 ? moveBackward(230) : moveBackward((leftY * 1.2) - 5);
     }
 
-
-  //Right joystick is for turning
-
-  else if (rightX > 10) {
-
-      if (rightX <= 100) {
-        turn_right(110-rightX);
-      }
-
-      else if (rightX <= 127) {
-        turn_right(-150);
-      }
-
+    // Turning
+    else if (rightX > 10) {
+      rightX <= 100 ? turnRight(110 - rightX) : turnRight(-150);
     }
-
-  else if (rightX < -10) {
-
-          if (rightX >= -100) {
-                  turn_left(110 + rightX);
-          }
-
-          else {
-            turn_left(-150);
-          }
+    else if (rightX < -10) {
+      rightX >= -100 ? turnLeft(110 + rightX) : turnLeft(-150);
     }
-
-
-  else stop_motors();
+    else {
+      stopMotors();
+    }
   }
-
-  // if (ramp_motor) {
-  // digitalWrite(m_ramp, HIGH);}
-
-
-  // stop_motors();
-  // delay(100);
-
-  // move_forward(60);
-  // delay(3000);
-
-  // stop_motors();
-  // delay(3000);
-
-  // move_forward(150);
-  // delay(3000);
-
-  // stop_motors();
-  // delay(3000);
-
-  // move_forward(250);
-  // delay(3000);
-
-  // stop_motors();
-  // delay(3000);
 }
 
+// ===================== Motion Functions ===================== //
 
-void stop_motors() {
-  digitalWrite(m_frontRight_forward, LOW);
-  digitalWrite(m_frontRight_backwards, LOW);
-
-  digitalWrite(m_frontLeft_forward, LOW);
-  digitalWrite(m_frontLeft_backwards, LOW);
-
-  digitalWrite(m_backLeft_forward, LOW);
-  digitalWrite(m_backLeft_backwards, LOW);
-
-  digitalWrite(m_backRight_forward, LOW);
-  digitalWrite(m_backRight_backwards, LOW);
+void stopMotors() {
+  digitalWrite(FR_FORWARD, LOW); digitalWrite(FR_BACKWARD, LOW);
+  digitalWrite(FL_FORWARD, LOW); digitalWrite(FL_BACKWARD, LOW);
+  digitalWrite(BL_FORWARD, LOW); digitalWrite(BL_BACKWARD, LOW);
+  digitalWrite(BR_FORWARD, LOW); digitalWrite(BR_BACKWARD, LOW);
 }
 
-
-void move_forward(int speed) {
-  digitalWrite(m_frontRight_forward, HIGH);
-  digitalWrite(m_frontRight_backwards, LOW);
-  ledcWrite(channel_frontRight, speed);
-
-  digitalWrite(m_frontLeft_forward, HIGH);
-  digitalWrite(m_frontLeft_backwards, LOW);
-  ledcWrite(channel_frontLeft, speed);
-
-  digitalWrite(m_backLeft_forward, HIGH);
-  digitalWrite(m_backLeft_backwards, LOW);
-  ledcWrite(channel_backLeft, speed);
-
-  digitalWrite(m_backRight_forward, HIGH);
-  digitalWrite(m_backRight_backwards, LOW);
-  ledcWrite(channel_backRight, speed);
+void moveForward(int speed) {
+  digitalWrite(FR_FORWARD, HIGH); digitalWrite(FR_BACKWARD, LOW); ledcWrite(CH_FR, speed);
+  digitalWrite(FL_FORWARD, HIGH); digitalWrite(FL_BACKWARD, LOW); ledcWrite(CH_FL, speed);
+  digitalWrite(BL_FORWARD, HIGH); digitalWrite(BL_BACKWARD, LOW); ledcWrite(CH_BL, speed);
+  digitalWrite(BR_FORWARD, HIGH); digitalWrite(BR_BACKWARD, LOW); ledcWrite(CH_BR, speed);
 }
 
-void move_backwards(int speed) {
-  digitalWrite(m_frontRight_forward, LOW);
-  digitalWrite(m_frontRight_backwards, HIGH);
-  ledcWrite(channel_frontRight, speed);
-
-  digitalWrite(m_frontLeft_forward, LOW);
-  digitalWrite(m_frontLeft_backwards, HIGH);
-  ledcWrite(channel_frontLeft, speed);
-
-  digitalWrite(m_backLeft_forward, LOW);
-  digitalWrite(m_backLeft_backwards, HIGH);
-  ledcWrite(channel_backLeft, speed);
-
-  digitalWrite(m_backRight_forward, LOW);
-  digitalWrite(m_backRight_backwards, HIGH);
-  ledcWrite(channel_backRight, speed);
+void moveBackward(int speed) {
+  digitalWrite(FR_FORWARD, LOW); digitalWrite(FR_BACKWARD, HIGH); ledcWrite(CH_FR, speed);
+  digitalWrite(FL_FORWARD, LOW); digitalWrite(FL_BACKWARD, HIGH); ledcWrite(CH_FL, speed);
+  digitalWrite(BL_FORWARD, LOW); digitalWrite(BL_BACKWARD, HIGH); ledcWrite(CH_BL, speed);
+  digitalWrite(BR_FORWARD, LOW); digitalWrite(BR_BACKWARD, HIGH); ledcWrite(CH_BR, speed);
 }
 
-void turn_right(int speed) {
-if (speed >= 0 ) {
-digitalWrite(m_frontRight_forward, HIGH);
-  digitalWrite(m_frontRight_backwards, LOW);
-  ledcWrite(channel_frontRight, speed);
-
-
-  digitalWrite(m_backRight_forward, HIGH);
-  digitalWrite(m_backRight_backwards, LOW);
-  ledcWrite(channel_backRight, speed);
-}
-
-else if (speed < 0 ) {
-digitalWrite(m_frontRight_forward, LOW);
-  digitalWrite(m_frontRight_backwards, HIGH);
-  ledcWrite(channel_frontRight, abs(speed) );
-
-
-  digitalWrite(m_backRight_forward, LOW);
-  digitalWrite(m_backRight_backwards, HIGH);
-  ledcWrite(channel_backRight, abs(speed) );
-}
-  
-
-  digitalWrite(m_frontLeft_forward, HIGH);
-  digitalWrite(m_frontLeft_backwards, LOW);
-  ledcWrite(channel_frontLeft, 250);
-
-  digitalWrite(m_backLeft_forward, HIGH);
-  digitalWrite(m_backLeft_backwards, LOW);
-  ledcWrite(channel_backLeft, 250);
-
-}
-
-void turn_left(int speed) {
+void turnRight(int speed) {
   if (speed >= 0) {
-  
-    digitalWrite(m_frontLeft_forward, HIGH);
-    digitalWrite(m_frontLeft_backwards, LOW);
-    ledcWrite(channel_frontLeft, speed);
-
-    digitalWrite(m_backLeft_forward, HIGH);
-    digitalWrite(m_backLeft_backwards, LOW);
-    ledcWrite(channel_backLeft, speed);
+    digitalWrite(FR_FORWARD, HIGH); digitalWrite(FR_BACKWARD, LOW); ledcWrite(CH_FR, speed);
+    digitalWrite(BR_FORWARD, HIGH); digitalWrite(BR_BACKWARD, LOW); ledcWrite(CH_BR, speed);
+  } else {
+    digitalWrite(FR_FORWARD, LOW); digitalWrite(FR_BACKWARD, HIGH); ledcWrite(CH_FR, abs(speed));
+    digitalWrite(BR_FORWARD, LOW); digitalWrite(BR_BACKWARD, HIGH); ledcWrite(CH_BR, abs(speed));
   }
+  digitalWrite(FL_FORWARD, HIGH); digitalWrite(FL_BACKWARD, LOW); ledcWrite(CH_FL, 250);
+  digitalWrite(BL_FORWARD, HIGH); digitalWrite(BL_BACKWARD, LOW); ledcWrite(CH_BL, 250);
+}
 
-  else if (speed < 0 ) {
-  
-  
-    digitalWrite(m_frontLeft_forward, LOW);
-    digitalWrite(m_frontLeft_backwards, HIGH);
-    ledcWrite(channel_frontLeft, abs(speed));
-
-    digitalWrite(m_backLeft_forward, LOW);
-    digitalWrite(m_backLeft_backwards, HIGH);
-    ledcWrite(channel_backLeft, abs(speed));
+void turnLeft(int speed) {
+  if (speed >= 0) {
+    digitalWrite(FL_FORWARD, HIGH); digitalWrite(FL_BACKWARD, LOW); ledcWrite(CH_FL, speed);
+    digitalWrite(BL_FORWARD, HIGH); digitalWrite(BL_BACKWARD, LOW); ledcWrite(CH_BL, speed);
+  } else {
+    digitalWrite(FL_FORWARD, LOW); digitalWrite(FL_BACKWARD, HIGH); ledcWrite(CH_FL, abs(speed));
+    digitalWrite(BL_FORWARD, LOW); digitalWrite(BL_BACKWARD, HIGH); ledcWrite(CH_BL, abs(speed));
   }
-  digitalWrite(m_frontRight_forward, HIGH);
-  digitalWrite(m_frontRight_backwards, LOW);
-  ledcWrite(channel_frontRight, 250);
-
-
-  digitalWrite(m_backRight_forward, HIGH);
-  digitalWrite(m_backRight_backwards, LOW);
-  ledcWrite(channel_backRight, 250);
+  digitalWrite(FR_FORWARD, HIGH); digitalWrite(FR_BACKWARD, LOW); ledcWrite(CH_FR, 250);
+  digitalWrite(BR_FORWARD, HIGH); digitalWrite(BR_BACKWARD, LOW); ledcWrite(CH_BR, 250);
 }

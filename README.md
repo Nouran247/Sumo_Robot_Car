@@ -84,6 +84,12 @@ All parts can be opened, modified, and exported using **SolidWorks** or other co
 Feel free to fork the repository, make improvements, and submit pull requests. Suggestions and feedback are welcome!
 
 ---
+The robot
+![Sumo Robot](Sumo_Car_Robot.jpg)
+
+
+
+---
 
 ## 📁 Repository Structure
 ```plaintext
@@ -103,5 +109,7 @@ Feel free to fork the repository, make improvements, and submit pull requests. S
  ┗ Simulation_sumo_robot.ino
 
 📁 Sumo_Robot_Car_Code.ino
+
+🖼️ Sumo_Car_Robot.jpg
 
 📄 README.md

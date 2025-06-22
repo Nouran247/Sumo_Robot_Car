@@ -84,7 +84,9 @@ All parts can be opened, modified, and exported using **SolidWorks** or other co
 Feel free to fork the repository, make improvements, and submit pull requests. Suggestions and feedback are welcome!
 
 ---
-The robot
+
+### 📸 Final Assembly of Our Sumo Robot Car
+
 ![Sumo Robot](Sumo_Car_Robot.jpg)
 
 
